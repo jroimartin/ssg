@@ -1,0 +1,380 @@
+#!/usr/bin/env perl
+# ssg - simple slide generator
+# nibble <nibble@develsec.org> - MIT License - 2010-2011
+# Contribs: pancake <pancake@nopcode.org>
+
+# Configuration vars
+# Slide
+$hdrsz="75";
+$hdrcolor="0 0 0";
+$bgcolor="1 1 1";
+$linecolor="0 0 0";
+# Frontpage font
+$frontfont="Verdana";
+$frontfontsz="60";
+$frontfontcolor="0.5 0.5 0.9";
+# Author font
+$authorfont="Times-Italic";
+$authorfontsz="23";
+$authorfontcolor="0 0 0";
+# Title font
+$titlefont="Verdana";
+$titlefontsz="40";
+$titlefontcolor="0.5 0.5 0.9";
+# Default font
+$mainfont="Verdana";
+$mainfontsz="25";
+$mainfontcolor="0 0 0";
+# Code Block font
+$codefont="Courier";
+$codefontsz="20";
+$codefontcolor="0 0 0";
+# Tiny font
+$tinyfont="Verdana";
+$tinyfontsz="18";
+$tinyfontcolor="0 0 0";
+
+# Load user config
+foreach (0 .. $#ARGV) {
+	do $ARGV[$_] if ($ARGV[$_-1] eq "-c");
+	&usage if ($ARGV[$_] eq "-h");
+}
+
+# Global vars
+$pages = 1;
+$code = 0;
+$bgimg = "";
+
+sub usage {
+	print "  Usage: $0 [-c file]\n";
+	exit 1;
+}
+
+sub printdict {
+	print <<__DICT__;
+%!PS-Adobe-3.0 
+%%DocumentMedia: SLIDE 842 595 0 () () 
+%%EndComments 
+%%BeginDefaults 
+%%PageMedia: SLIDE
+%%EndDefaults 
+<< /PageSize [842 595] /ImagingBBox null >> setpagedevice 
+
+/ReEncode {
+	exch findfont
+	dup length dict
+	begin
+	{       
+		1 index /FID eq
+		{ pop pop }
+		{ def } ifelse
+	} forall
+	/Encoding ISOLatin1Encoding def
+	currentdict
+	end
+	definefont
+	pop
+} bind def
+/Verdana /Verdana ReEncode
+/Courier /Courier ReEncode
+/Times-Italic /Times-Italic ReEncode
+
+/pagewidth 842 def
+/pageheight 595 def
+/headerheight $hdrsz def
+/pad 10 def
+
+/leftmargin 30 def
+/topmargin 595 def
+
+/frontfontsz $frontfontsz def
+/authorfontsz $authorfontsz def
+/titlefontsz $titlefontsz def
+/mainfontsz $mainfontsz def
+/codefontsz $codefontsz def
+/tinyfontsz $tinyfontsz def
+
+/titlefonth titlefontsz pad add def
+/mainfonth mainfontsz pad add def
+/codefonth codefontsz pad add def
+/tinyfonth tinyfontsz pad add def
+/frontfonth frontfontsz pad add def
+/authorfonth authorfontsz pad add def
+
+/titlefont /$titlefont findfont titlefontsz scalefont def
+/mainfont /$mainfont findfont mainfontsz scalefont def
+/codefont /$codefont findfont codefontsz scalefont def
+/tinyfont /$tinyfont findfont tinyfontsz scalefont def
+/frontfont /$frontfont findfont frontfontsz scalefont def
+/authorfont /$authorfont findfont authorfontsz scalefont def
+
+/headermargin
+	pageheight headerheight titlefonth sub 2 div titlefontsz add sub
+def
+/rightmargin pagewidth leftmargin sub def
+/tbtop topmargin def
+/ypos topmargin def
+
+/xcur { currentpoint pop } def
+/ycur { currentpoint exch pop } def
+
+/wordbreak ( ) def
+/linewrap {
+	/proc exch def
+	/linelength exch def
+	/textstring exch def
+	/breakwidth wordbreak stringwidth pop def
+	/curwidth 0 def
+	/lastwordbreak 0 def
+	/startchar 0 def
+	/restoftext textstring def
+	{
+		restoftext wordbreak search
+		{
+			/nextword exch def pop
+			/restoftext exch def
+			/wordwidth nextword stringwidth pop def
+			curwidth wordwidth add linelength gt
+			{
+				textstring startchar
+				lastwordbreak startchar sub
+				getinterval proc
+				/startchar lastwordbreak def
+				/curwidth wordwidth breakwidth add def
+			}
+			{
+				/curwidth curwidth wordwidth add
+				breakwidth add def 
+			} ifelse
+			/lastwordbreak lastwordbreak
+			nextword length add 1 add def
+		}
+		{
+			pop exit
+		} ifelse
+	} loop
+	/lastchar textstring length def
+	textstring startchar lastchar startchar sub 
+	getinterval proc
+} def
+
+/line {
+	$linecolor setrgbcolor
+	0.5 setlinewidth
+	leftmargin ypos moveto
+	rightmargin ypos lineto
+	stroke
+} def
+
+/center {
+	dup
+	/str exch def
+	/sw str stringwidth pop def
+	/xpos pagewidth sw sub 2 div xcur sub def
+	xpos 0 rmoveto
+} def
+
+/objcenter {
+	pagewidth exch sub 2 div 0 translate
+} def
+
+/s {
+	/tbtop topmargin def
+	/ypos topmargin def
+	$bgcolor setrgbcolor
+	0 setlinewidth
+	newpath
+	0 pageheight moveto
+	pagewidth pageheight lineto
+	pagewidth 0 lineto
+	0 0 lineto
+	closepath
+	fill
+	stroke
+} def
+
+/l {
+	/h exch def
+	/ypos ypos h sub def
+	leftmargin ypos moveto
+} def
+
+/title {
+	line
+	frontfont setfont
+	$frontfontcolor setrgbcolor
+	{ pagewidth leftmargin 2 mul sub }
+	{ frontfonth l center show }
+	linewrap
+	frontfonth 2 div l
+	line
+} def
+
+/author {
+	authorfont setfont
+	$authorfontcolor setrgbcolor
+	{ pagewidth leftmargin 2 mul sub }
+	{ authorfonth l center show }
+	linewrap
+} def
+
+/header {
+	/ypos pageheight headerheight sub def
+	$hdrcolor setrgbcolor
+	0 setlinewidth
+	newpath
+	0 pageheight moveto
+	pagewidth pageheight lineto
+	pagewidth ypos lineto
+	0 ypos lineto
+	closepath
+	fill
+	stroke
+	leftmargin headermargin moveto
+	titlefont setfont 
+	$titlefontcolor setrgbcolor
+	center show
+	leftmargin ypos moveto
+} def
+
+/n {
+	mainfont setfont
+	$mainfontcolor setrgbcolor
+	{ pagewidth leftmargin 2 mul sub }
+	{ mainfonth l show }
+	linewrap
+} def
+
+/cn {
+	codefont setfont
+	$codefontcolor setrgbcolor
+	{ pagewidth leftmargin 2 mul sub }
+	{ codefonth l show }
+	linewrap
+} def
+
+/tn {
+	tinyfont setfont
+	$tinyfontcolor setrgbcolor
+	{ pagewidth leftmargin 2 mul sub }
+	{ tinyfonth l show }
+	linewrap
+} def
+
+/is {
+	/level1 save def
+	/showpage {} def
+} def
+
+/ie {
+	level1 restore
+} def
+
+/bs {
+	/tbtop ypos def
+} def
+
+/be {
+	/tm tbtop pad sub def
+	/bm ypos pad sub def
+	newpath
+	leftmargin 10 sub tm moveto
+	rightmargin tm lineto
+	rightmargin bm lineto
+	leftmargin 10 sub bm lineto
+	closepath
+	$linecolor setrgbcolor
+	0.5 setlinewidth
+	stroke
+} def
+
+__DICT__
+}
+
+sub printfooter {
+	print "showpage\n\n%%EOF";
+}
+
+sub printimg {
+	local $fn = shift;
+	if ($fn=~/^(.*)\|(.*)$/ || !($fn=~/\.ps$/)) {
+		$fn = $1 if ($2);
+		open IMG, "-|", "convert $2 '$fn' ps:-" or die ("Cannot find $fn\n");
+	} else {
+		open IMG, "<", $fn or die ("Cannot find postscript file $fn\n");
+	}
+	print "is\n";
+	for ($s=""; <IMG>; $s.=$_) {
+		if ($_=~/%%BoundingBox: \d+ \d+ (\d+) \d+/) {
+			print "$1 objcenter\n";
+			last;
+		}
+	}
+	print "%%BeginDocument: $1\n$s",<IMG>,"\n\n%%EndDocument\nie\n";
+	close IMG;
+}
+
+# main
+
+&printdict;
+
+#STDIN=>':encoding(utf8)';
+#STDOUT=>':encoding(iso 8859-1)';
+while (<STDIN>) {
+	s/[\r\n]+//g; s/([^^])\\/$1\\\\/g; s/(\(|\))/\\$1/g;
+	/^%/ && do next;
+	/^##(.*)/ && do { # Main Title
+		if ($code == 1) { print "be\n"; $code = 0; }
+		if ($pages != 1) { print "showpage\n"; }
+		print "%%Page: $pages $pages\ns\n";
+		if ($bgimg ne "") { &printimg ($bgimg)}
+		print "frontfonth l\n($1) title\nfrontfonth l\n";
+		$pages++;
+		next;
+	};
+	/^#(.*)/ && do { # Slide Title
+		if ($code == 1) { print "be\n"; $code = 0 }
+		if ($pages != 1) { print "showpage\n" }
+		print "%%Page: $pages $pages\ns\n";
+		if ($bgimg ne "") { &printimg ($bgimg)}
+		print "($1) header\n";
+		$pages++;
+		next;
+	};
+	/^\.$/ && do { # Blank slide
+		if ($code == 1) { print "be\n"; $code = 0 }
+		if ($pages != 1) { print "showpage\n" }
+		print "%%Page: $pages $pages\ns\n";
+		if ($bgimg ne "") { &printimg ($bgimg) }
+		$pages++;
+		next;
+	};
+	/^@(.*)/ && do { # Author
+		if ($code == 1) { print "be\n"; $code = 0; }
+		print "($1 ) author\n";
+		next;
+	};
+	/^\t(.*)/ && do { # Code
+		if ($code == 0) { print "bs\n"; $code = 1; }
+		print "($1 ) cn\n";
+		next;
+	};
+	/^\[(.*)\]/ && do { # Image
+		if ($code == 1) { print "be\n"; $code = 0; }
+		&printimg ($1);
+		next;
+	};
+	/^\{(.*)\}/ && do { # Background
+		$bgimg = $1;
+		next;
+	};
+	/^_(.*)/ && do { # Tiny
+		if ($code == 1) { print "be\n"; $code = 0; }
+		print "($1 ) tn\n";
+		next;
+	};
+	s/^\\//;
+	if ($code == 1) { print "be\n"; $code = 0; }
+	print "($_ ) n\n";
+}
+&printfooter;

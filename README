@@ -1,0 +1,21 @@
+ssg - simple slide generator
+----------------------------
+
+DESCRIPTION
+ssg is a slide generation system which provides a markdown-like syntax.
+
+USAGE
+	cat slides | ssg > slides.ps
+See t/test for a typical case of use.
+
+CUSTOMIZATION
+Copy doc/config to your working directory and customize it. Then, load the
+new config with:
+	cat slides | ssg -c config > slides.ps
+
+ENCODING
+	ssg < slides | iconv -f UTF-8 -t L1 > slides.ps
+
+
+AUTHORS
+nibble <nibble@develsec.org>

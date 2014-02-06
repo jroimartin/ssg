@@ -1,0 +1,29 @@
+# Slide
+$hdrsz="75";
+$hdrcolor="0.89 0.38 0";
+$bgcolor="0.1 0.1 0.1";
+$linecolor="0.89 0.38 0";
+# Frontpage font
+$frontfont="Verdana";
+$frontfontsz="60";
+$frontfontcolor="0.89 0.38 0";
+# Author font
+$authorfont="Times-Italic";
+$authorfontsz="23";
+$authorfontcolor="1 1 1";
+# Title font
+$titlefont="Verdana";
+$titlefontsz="40";
+$titlefontcolor="1 1 1";
+# Default font
+$mainfont="Verdana";
+$mainfontsz="25";
+$mainfontcolor="1 1 1";
+# Code Block font
+$codefont="Courier";
+$codefontsz="20";
+$codefontcolor="1 1 1";
+# Tiny font
+$tinyfont="Verdana";
+$tinyfontsz="18";
+$tinyfontcolor="1 1 1";

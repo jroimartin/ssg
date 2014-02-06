@@ -1,0 +1,20 @@
+.TH SSG 1 ssg\-VERSION
+.SH NAME
+ssg \- simple slide generator
+.SH SYNOPSIS
+.B ssg
+.RB [-c file]
+.SH DESCRIPTION
+ssg is a slide generation system which provides a markdown-like syntax.
+.SH OPTIONS
+.TP
+.B \-c file
+loads configuration file.
+.SH USAGE
+cat slides | ssg > slides.ps
+.P
+See t/test for a typical case of use.
+.SH ENCODING
+ssg < slides | iconv -f UTF-8 -t L1 > slides.ps
+.SH AUTHORS
+nibble <nibble@develsec.org>
